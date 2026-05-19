@@ -17,4 +17,4 @@ pillow
 
 librosa
 
-reseblyzer
+resemblyzer
