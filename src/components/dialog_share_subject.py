@@ -27,7 +27,7 @@ def share_subject_dialog(name, subject_code):
     # Later you can replace this with:
     # https://yourdomain.com
     # -----------------------------------------------------
-    app_domain = "snapclass-main.streamlit.app"
+    app_domain = "snapclass-master.streamlit.app"
 
     # -----------------------------------------------------
     # Create join URL
