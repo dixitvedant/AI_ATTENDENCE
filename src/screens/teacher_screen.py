@@ -395,6 +395,7 @@ def teacher_tab_manage_subjects():
 
 
 def teacher_tab_attendence_records():
+
     st.header('Attendance Records')
 
     teacher_id = st.session_state.teacher_data['teacher_id']
@@ -402,49 +403,86 @@ def teacher_tab_attendence_records():
     records = get_attendance_for_teacher(teacher_id)
 
     if not records:
+        st.info("No attendance records found")
         return
-    
+
     data = []
 
     for r in records:
+
         ts = r.get('timestamp')
 
+        # Convert UTC timestamp from Supabase to IST
+        if ts:
+            try:
+                dt_utc = datetime.fromisoformat(
+                    ts.replace("Z", "+00:00")
+                )
+
+                dt_ist = dt_utc.astimezone(
+                    ZoneInfo("Asia/Kolkata")
+                )
+
+                time_display = dt_ist.strftime(
+                    "%Y-%m-%d %I:%M %p"
+                )
+
+                # Used for grouping same attendance session
+                ts_group = dt_ist.strftime(
+                    "%Y-%m-%d %H:%M"
+                )
+
+            except Exception:
+                time_display = "Invalid Time"
+                ts_group = None
+
+        else:
+            time_display = "N/A"
+            ts_group = None
+
         data.append({
-            "ts_group": ts.split(".")[0] if ts else None,
-            "Time": datetime.fromisoformat(ts).strftime("%Y-%m-%d %I:%M %p") if ts else "N'A",
+            "ts_group": ts_group,
+            "Time": time_display,
             "Subject": r['subject']['name'],
-            "Subject Code":r['subject']['subject_code'],
+            "Subject Code": r['subject']['subject_code'],
             "is_present": bool(r.get('is_present', False))
         })
 
-
     df = pd.DataFrame(data)
 
-
-
+    # Attendance summary
     summary = (
-        df.groupby(['ts_group', 'Time', 'Subject', 'Subject Code'])
+        df.groupby(
+            ['ts_group', 'Time', 'Subject', 'Subject Code']
+        )
         .agg(
-            Present_Count = ('is_present', 'sum'),
-            Total_Count =('is_present', 'count')
-        ).reset_index()
-
+            Present_Count=('is_present', 'sum'),
+            Total_Count=('is_present', 'count')
+        )
+        .reset_index()
     )
 
+    # Create attendance stats column
     summary['Attendance Stats'] = (
-        "✅ " + summary['Present_Count'].astype(str) + " /"
-        + summary['Total_Count'].astype(str) + ' Students'
+        "✅ "
+        + summary['Present_Count'].astype(str)
+        + "/"
+        + summary['Total_Count'].astype(str)
+        + " Students"
     )
 
-    display_df = ( summary.sort_values(by='ts_group' ,ascending=False)
-                [['Time', 'Subject', 'Subject Code', 'Attendance Stats']]
-                )
-    
-    st.dataframe(display_df, width='stretch', hide_index=True)
+    # Final display dataframe
+    display_df = (
+        summary
+        .sort_values(by='ts_group', ascending=False)
+        [['Time', 'Subject', 'Subject Code', 'Attendance Stats']]
+    )
 
-
-
-
+    st.dataframe(
+        display_df,
+        width='stretch',
+        hide_index=True
+    )
 
 def login_teacher(username, password):
     if not username or not password:
