@@ -1,5 +1,6 @@
 import streamlit as st
 
+#Baselayout of home background violet and white card
 def style_background_home():
 
     st.markdown("""
@@ -20,12 +21,15 @@ def style_background_home():
             ,unsafe_allow_html=True)
     
 
+#Baselayout of After we click on teacher or student portal
 def style_background_dashboard():
     st.markdown("""
     <style>
             .stApp{
                 background:#E0E3FF!important;
                 }
+
+            
     </style>
                 """,unsafe_allow_html=True)
 
