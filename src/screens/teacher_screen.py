@@ -394,266 +394,98 @@ def teacher_tab_manage_subjects():
         )
 
 
-
- [2026-05-20 06:04:56.856867] + cuda-pathfinder==1.5.4
-
- + cuda-toolkit==13.0.2
-
- + [2026-05-20 06:04:56.857384] decorator==5.3.1
-
- + deprecation==2.1.0
-
- + dlib-bin==[2026-05-20 06:04:56.857691] 20.0.1
-
- + face-recognition-models==0.3.0 (from git+https://github.com/ageitgey/face_recognition_models@e67de717267507d1e9246de95692eb8be736ab61)
-
- + filelock==[2026-05-20 06:04:56.857910] 3.29.0
-
- + fsspec==2026.4.0
-
- + gitdb==4.0.12
-
- +[2026-05-20 06:04:56.858147]  gitpython==3.1.50
-
- + h11==0.16.0
-
- +[2026-05-20 06:04:56.858832]  h2==4.3.0
-
- + hpack==4.1.0
-
- + httpcore==1.0.9
-
- + httptools==0.7.1
-
- + [2026-05-20 06:04:56.859016] httpx==0.28.1
-
- + hyperframe==6.1.0
-
- + idna==3.15
-
- + itsdangerous==2.2.0
-
- +[2026-05-20 06:04:56.859197]  jinja2==3.1.6
-
- + joblib==1.5.3
-
- + jsonschema==4.26.0
-
- + jsonschema-specifications==2025.9.1
-
- + lazy-loader==0.5[2026-05-20 06:04:56.859402] 
-
- + librosa==0.11.0
-
- + llvmlite==0.47.0
-
- + markdown-it-py==4.2.0
-
- + markupsafe==3.0.3
-
- [2026-05-20 06:04:56.859545] + mdurl==0.1.2
-
- + mmh3==5.2.1
-
- + mpmath==1.3.0
-
- + msgpack==1.1.2[2026-05-20 06:04:56.859731] 
-
- + multidict==6.7.1
-
- + narwhals==2.21.2
-
- + networkx==3.6.1
-
- + numba==[2026-05-20 06:04:56.859884] 0.65.1
-
- + numpy==2.4.6
-
- + nvidia-cublas==13.1.1.3
-
- + nvidia-cuda-cupti==13.0.85[2026-05-20 06:04:56.860022] 
-
- + nvidia-cuda-nvrtc==13.0.88
-
- + nvidia-cuda-runtime==13.0.96
-
- + nvidia-cudnn-cu13==9.20.0.48
-
- + nvidia-cufft[2026-05-20 06:04:56.860140] ==12.0.0.61
-
- + nvidia-cufile==1.15.1.6
-
- + [2026-05-20 06:04:56.860275] nvidia-curand==10.4.0.35
-
- + nvidia-cusolver==12.0.4.66
-
- + nvidia-cusparse==12.6.3.3
-
- + nvidia-cusparselt-cu13==0.8.1
-
- + nvidia-nccl-cu13[2026-05-20 06:04:56.860452] ==2.29.7
-
- + nvidia-nvjitlink==13.0.88
-
- + nvidia-nvshmem-cu13==3.4.5
-
- + nvidia-nvtx==[2026-05-20 06:04:56.860597] 13.0.85
-
- + packaging==26.2
-
- + pandas==3.0.3
-
- + pillow==12.2.0
-
- + [2026-05-20 06:04:56.860753] platformdirs==4.9.6
-
- + pooch==1.9.0
-
- + postgrest==2.30.0
-
- + propcache==[2026-05-20 06:04:56.860951] 0.5.2
-
- + protobuf==7.35.0
-
- + pyarrow==24.0.0
-
- + pycparser==3.0
-
- + pydantic==2.13.4
-
- + pydantic-core==2.46.4
-
- + pydeck==0.9.2
-
- + pygments==2.20.0
-
- + pyiceberg==0.11.1[2026-05-20 06:04:56.861226] 
-
- + pyjwt==2.12.1
-
- + pyparsing==3.3.2
-
- + [2026-05-20 06:04:56.861460] pyroaring==1.1.0
-
- + python-dateutil==2.9.0.post0
-
- + python-multipart[2026-05-20 06:04:56.861743] ==0.0.29
-
- + realtime==2.30.0
-
- + referencing==0.37.0
-
- + requests==2.34.2
-
- + resemblyzer==0.1.4
-
- + rich==14.3.4
-
- + rpds-py==0.30.0
-
- + scikit-learn[2026-05-20 06:04:56.861985] ==1.8.0
-
- + scipy==1.17.1
-
- + segno==1.6.6
-
- + setuptools==69.5.1
-
- + six==1.17.0[2026-05-20 06:04:56.864622] 
-
- + smmap==5.0.3
-
- + soundfile==0.13.1
-
- + soxr==1.1.0
-
- + standard-aifc==3.13.0[2026-05-20 06:04:56.864853] 
-
- + standard-chunk==3.13.0
-
- + standard-sunau==3.13.0
-
- + starlette==1.0.0
-
- + storage3==[2026-05-20 06:04:56.865069] 2.30.0
-
- + streamlit==1.57.0
-
- + strenum==0.4.15
-
- + strictyaml==1.7.3
-
- +[2026-05-20 06:04:56.865235]  supabase==2.30.0
-
- + supabase-auth==2.30.0
-
- + supabase-functions==2.30.0
-
- + sympy==1.14.0
-
- [2026-05-20 06:04:56.865431] + tenacity==9.1.4
-
- + threadpoolctl==3.6.0
-
- + toml==0.10.2
-
- + torch==[2026-05-20 06:04:56.865668] 2.12.0
-
- + triton==3.7.0
-
- + typing==3.10.0.0
-
- + typing-extensions==4.15.0
-
- [2026-05-20 06:04:56.865885] + typing-inspection==0.4.2
-
- + urllib3==2.7.0
-
- + uvicorn==0.47.0[2026-05-20 06:04:56.866042] 
-
- + watchdog==6.0.0
-
- + webrtcvad==2.0.10
-
- +[2026-05-20 06:04:56.866242]  websockets==15.0.1
-
- + yarl==1.24.2
-
- + [2026-05-20 06:04:56.891018] zstandard==0.25.0
-
-Checking if Streamlit is installed
-
-Found Streamlit version 1.57.0 in the environment
-
-Installing rich for an improved exception logging
-
-Using uv pip install.
-
-Using Python 3.14.5 environment at /home/adminuser/venv
-
-Audited 1 package in 4ms
-
-
-────────────────────────────────────────────────────────────────────────────────────────
-
-
-[06:05:00] 🐍 Python dependencies were installed from /mount/src/ai_attendence/requirements.txt using uv.
-
-Check if streamlit is installed
-
-Streamlit is already installed
-
-[06:05:01] 📦 Processed dependencies!
-
-2026-05-20 06:05:03.361 Uvicorn server started on 0.0.0.0:8501
-
-
-
-
-main
-dixitvedant/ai_attendence/main/app.py
-
-
+def teacher_tab_attendence_records():
+    st.header('Attendance Records')
+
+    teacher_id = st.session_state.teacher_data['teacher_id']
+
+    records = get_attendance_for_teacher(teacher_id)
+
+    if not records:
+        st.info("No attendance records found")
+        return
+
+    data = []
+
+    for r in records:
+        ts = r.get('timestamp')
+
+        if ts:
+
+            # Read timestamp from DB
+            dt = datetime.fromisoformat(
+                ts.replace("Z", "+00:00")
+            )
+
+            # # If UTC exists, convert to IST
+            # if dt.tzinfo:
+            #     dt = dt.astimezone(
+            #         ZoneInfo("Asia/Kolkata")
+            #     )
+
+            formatted_time = dt.strftime(
+                "%Y-%m-%d %I:%M:%S %p"
+            )
+
+            ts_group = dt.strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+
+        else:
+            formatted_time = "N/A"
+            ts_group = None
+
+        data.append({
+            "ts_group": ts_group,
+            "Time": formatted_time,
+            "Subject": r['subject']['name'],
+            "Subject Code": r['subject']['subject_code'],
+            "is_present": bool(
+                r.get('is_present', False)
+            )
+        })
+
+    df = pd.DataFrame(data)
+
+    summary = (
+        df.groupby(
+            ['ts_group',
+             'Time',
+             'Subject',
+             'Subject Code']
+        )
+        .agg(
+            Present_Count=('is_present', 'sum'),
+            Total_Count=('is_present', 'count')
+        )
+        .reset_index()
+    )
+
+    summary['Attendance Stats'] = (
+        "✅ "
+        + summary['Present_Count'].astype(str)
+        + " / "
+        + summary['Total_Count'].astype(str)
+        + " Students"
+    )
+
+    display_df = (
+        summary.sort_values(
+            by='ts_group',
+            ascending=False
+        )[
+            ['Time',
+             'Subject',
+             'Subject Code',
+             'Attendance Stats']
+        ]
+    )
+
+    st.dataframe(
+        display_df,
+        width='stretch',
+        hide_index=True
+    )
 
 def login_teacher(username, password):
     if not username or not password:
