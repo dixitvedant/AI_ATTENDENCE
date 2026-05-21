@@ -946,13 +946,25 @@ def teacher_tab_attendence_records():
                 )
             )
 
+            # =====================================
+            # UTC -> IST (+5:30)
+            # =====================================
+            dt = dt + timedelta(
+
+                hours=5,
+
+                minutes=30
+            )
+
             formatted_time = (
+
                 dt.strftime(
                     "%Y-%m-%d %I:%M:%S %p"
                 )
             )
 
             ts_group = (
+
                 dt.strftime(
                     "%Y-%m-%d %H:%M:%S"
                 )
@@ -963,6 +975,7 @@ def teacher_tab_attendence_records():
             )
 
             month_year = (
+
                 dt.strftime(
                     "%B %Y"
                 )
