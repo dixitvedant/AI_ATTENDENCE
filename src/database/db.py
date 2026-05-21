@@ -103,16 +103,309 @@ def get_student_attendence(student_id):
     response=supabase.table('attendence_logs').select('*,subject(*)').eq('student_id',student_id).execute()
     return response.data
 
-def create_attendence(logs):
-    response=supabase.table('attendence_logs').insert(logs).execute()
+def create_attendence(
+
+    logs,
+    session_id
+):
+
+    for log in logs:
+
+        log[
+            'session_id'
+        ] = session_id
+
+    supabase.table(
+        'attendence_logs'
+    ).insert(
+        logs
+    ).execute()
+
+
+def get_attendence_for_teacher(
+    teacher_id
+):
+
+    response = (
+
+        supabase
+        .table(
+            'attendence_logs'
+        )
+        .select(
+            """
+            *,
+            subject!inner(*),
+            students(*)
+            """
+        )
+        .eq(
+            'subject.teacher_id',
+            teacher_id
+        )
+        .execute()
+    )
+
     return response.data
 
-def get_attendance_for_teacher(teacher_id):
-    response=supabase.table('attendence_logs').select("*,subject!inner(*)").eq('subject.teacher_id',teacher_id).execute()
+def update_subject(
+    subject_id,
+    name,
+    section
+):
+
+    supabase.table(
+        'subject'
+    ).update({
+
+        'name':
+            name,
+
+        'section':
+            section
+
+    }).eq(
+
+        'subject_id',
+        subject_id
+
+    ).execute()
+
+def delete_subject(
+    subject_id
+):
+
+    supabase.table(
+        'subject'
+    ).delete().eq(
+
+        'subject_id',
+        subject_id
+
+    ).execute()
+    
+
+def get_students_for_subject(
+    subject_id
+):
+
+    res = (
+
+        supabase
+        .table(
+            'subject_students'
+        )
+        .select(
+            'students(*)'
+        )
+        .eq(
+            'subject_id',
+            subject_id
+        )
+        .execute()
+    )
+
+    return [
+
+        s[
+            'students'
+        ]
+
+        for s in res.data
+    ]
+
+def create_attendence_session(
+
+    subject_id,
+    teacher_id,
+    total_students,
+    present_students
+):
+
+    res = (
+
+        supabase
+        .table(
+            'attendence_sessions'
+        )
+        .insert({
+
+            'subject_id':
+                subject_id,
+
+            'teacher_id':
+                teacher_id,
+
+            'total_students':
+                total_students,
+
+            'present_students':
+                present_students
+        })
+        .execute()
+    )
+
+    return res.data[0]
+
+
+def get_teacher_sessions(
+
+    teacher_id
+):
+
+    response = (
+
+        supabase
+        .table(
+            'attendence_sessions'
+        )
+        .select(
+
+            "*,subject(*)"
+
+        )
+        .eq(
+            'teacher_id',
+            teacher_id
+        )
+        .order(
+
+            'lecture_time',
+
+            desc=True
+        )
+        .execute()
+    )
+
     return response.data
 
 
+def delete_lecture_session(
 
+    session_id
+):
+
+    supabase.table(
+
+        'attendence_sessions'
+
+    ).delete().eq(
+
+        'session_id',
+
+        session_id
+
+    ).execute()
+
+
+def get_lecture_logs(
+
+    session_id
+):
+
+    response = (
+
+        supabase
+        .table(
+            'attendence_logs'
+        )
+        .select(
+
+            "*,students(*)"
+
+        )
+        .eq(
+            'session_id',
+            session_id
+        )
+        .execute()
+    )
+
+    return response.data
+
+def update_lecture_log(
+
+    id,
+    is_present,
+    session_id
+):
+
+    # =====================================
+    # UPDATE LOG
+    # =====================================
+    supabase.table(
+
+        'attendence_logs'
+
+    ).update({
+
+        'is_present':
+            is_present
+
+    }).eq(
+
+        'id',
+
+        id
+
+    ).execute()
+
+    # =====================================
+    # RECALCULATE SESSION
+    # =====================================
+    logs = supabase.table(
+
+        'attendence_logs'
+
+    ).select(
+
+        'is_present'
+
+    ).eq(
+
+        'session_id',
+
+        session_id
+
+    ).execute()
+
+    total = len(
+        logs.data
+    )
+
+    present = sum(
+
+        1
+
+        for l in logs.data
+
+        if l[
+            'is_present'
+        ]
+    )
+
+    # =====================================
+    # UPDATE SESSION COUNTS
+    # =====================================
+    supabase.table(
+
+        'attendence_sessions'
+
+    ).update({
+
+        'total_students':
+            total,
+
+        'present_students':
+            present
+
+    }).eq(
+
+        'session_id',
+
+        session_id
+
+    ).execute()
 # Function to get all subjects created by a specific teacher
 def get_teacher_subject(teacher_id):
 

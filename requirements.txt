@@ -1,20 +1,48 @@
+# =========================
+# Streamlit
+# =========================
 streamlit
+streamlit-calendar
 
+# =========================
+# Data
+# =========================
 numpy
 pandas
+openpyxl
 
+# =========================
+# ML / Face Recognition
+# =========================
 scikit-learn
 dlib-bin
 git+https://github.com/ageitgey/face_recognition_models
 setuptools<70.0.0
 
+# =========================
+# Database / Auth
+# =========================
 supabase
 bcrypt
 
+# =========================
+# QR / Images
+# =========================
 segno
 pillow
 
-
+# =========================
+# Audio / Voice
+# =========================
 librosa
+resemblyzer
 
-reseblyzer
+# =========================
+# Reports / PDF
+# =========================
+reportlab
+
+# =========================
+# Networking
+# =========================
+requests

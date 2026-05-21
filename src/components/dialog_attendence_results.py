@@ -1,6 +1,6 @@
 import streamlit as st
 
-from src.database.db import create_attendence
+from src.database.db import create_attendence , create_attendence_session
 
 
 def clear_all_attendence_state():
@@ -54,8 +54,57 @@ def show_attendence_result(df, logs):
 
             try:
 
-                create_attendence(logs)
+                # =====================================
+                # CREATE LECTURE SESSION
+                # =====================================
+                subject_id = logs[0][
+                    'subject_id'
+                ]
 
+                teacher_id = (
+                    st.session_state
+                    .teacher_data[
+                        'teacher_id'
+                    ]
+                )
+
+                total_students = len(
+                    logs
+                )
+
+                present_students = sum(
+
+                    1
+
+                    for log in logs
+
+                    if log[
+                        'is_present'
+                    ]
+                )
+
+                session = create_attendence_session(
+
+                    subject_id,
+
+                    teacher_id,
+
+                    total_students,
+
+                    present_students
+                )
+
+                # =====================================
+                # SAVE ATTENDANCE INSIDE SESSION
+                # =====================================
+                create_attendence(
+
+                    logs,
+
+                    session[
+                        'session_id'
+                    ]
+                )
                 clear_all_attendence_state()
 
                 st.toast('Attendance taken successfully')

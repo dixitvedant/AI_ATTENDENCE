@@ -1,17 +1,28 @@
 import streamlit as st
+from datetime import timedelta
 
 from src.ui.base_layout import style_background_dashboard, style_base_layout
-
 from src.components.header import header_dashboard
 from src.components.footer import footer_dashboard
 from src.components.subject_card import subject_card
-from src.database.db import check_teacher_exists, create_teacher, teacher_login, get_teacher_subject,get_attendance_for_teacher
+from src.database.db import check_teacher_exists, create_teacher, teacher_login, get_teacher_subject,get_attendence_for_teacher
 from src.components.dialog_create_subject import create_subject_dialog
 from src.components.dialog_share_subject import share_subject_dialog
 from src.components.dialog_add_photo import add_photos_dialog
-
+from src.screens.ai_screen import ai_chat_widget
 from src.pipelines.face_pipeline import predict_attendence
 from src.components.dialog_attendence_results import show_attendence_result
+from src.components.dialog_edit_subject import edit_subject_dialog
+from src.components.dialog_delete_subject import delete_subject_dialog
+from src.components.dialog_view_students import view_students_dialog
+from src.database.db import get_teacher_sessions
+from src.components.dialog_delete_session import delete_lecture_dialog
+from src.components.dialog_edit_session import edit_lecture_dialog
+from src.components.dialog_view_session import view_lecture_dialog
+
+
+# from src.dialogs.view_students_dialog import view_students_dialog
+
 import numpy as np
 
 from datetime import datetime
@@ -19,7 +30,22 @@ from datetime import datetime
 import pandas as pd
 
 from src.database.config import supabase
+import pandas as pd
+import streamlit as st
 
+from datetime import datetime
+from io import BytesIO
+
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Paragraph,
+    Spacer,
+    Table
+)
+
+from reportlab.lib.styles import (
+    getSampleStyleSheet
+)
 
 from src.components.dialog_voice_attendence import voice_attendence_dialog
 
@@ -35,62 +61,319 @@ def teacher_screen():
     elif st.session_state.teacher_login_type == "register":
         teacher_screen_register()
 
-
+    ai_chat_widget()
 
 
 
 def teacher_dashboard():
-    teacher_data = st.session_state.teacher_data
-    c1, c2 = st.columns(2, vertical_alignment='center', gap='xxlarge')
-    with c1:
-        header_dashboard()
-    with c2:
-        st.subheader(f"""Welcome, {teacher_data['name']} """)
-        if st.button("Logout", type='secondary', key='loginbackbtn', shortcut="control+backspace"):
-            st.session_state['is_logged_in'] = False
-            del st.session_state.teacher_data 
-            st.rerun()
 
+    teacher_data = (
+        st.session_state.teacher_data
+    )
+
+    # =====================================
+    # HEADER
+    # =====================================
+    c1, c2 = st.columns(
+
+        2,
+
+        vertical_alignment='center',
+
+        gap='xxlarge'
+    )
+
+    with c1:
+
+        header_dashboard()
+
+    with c2:
+
+        st.subheader(
+
+            f"Welcome, "
+
+            f"{teacher_data['name']}"
+        )
+
+        if st.button(
+
+            "Logout",
+
+            type='secondary',
+
+            key='loginbackbtn',
+
+            shortcut=
+                "control+backspace"
+        ):
+
+            st.session_state[
+                'is_logged_in'
+            ] = False
+
+            del st.session_state[
+                'teacher_data'
+            ]
+
+            st.rerun()
 
     st.space()
 
-    if "current_teacher_tab" not in st.session_state:
-        st.session_state.current_teacher_tab = 'take_attendance'
-    tab1, tab2, tab3 = st.columns(3)
+    # =====================================
+    # DEFAULT TAB
+    # =====================================
+    if (
 
+        "current_teacher_tab"
 
+        not in
+
+        st.session_state
+    ):
+
+        st.session_state[
+            'current_teacher_tab'
+        ] = 'take_attendance'
+
+    # =====================================
+    # TAB BUTTONS
+    # =====================================
+    tab1, tab2, tab3, tab4 = (
+
+        st.columns(4)
+    )
+
+    # =====================================
+    # TAKE ATTENDANCE
+    # =====================================
     with tab1:
-        type1 = "primary" if st.session_state.current_teacher_tab == 'take_attendence' else "tertiary"
-        if st.button('Take Attendance',type=type1, width='stretch', icon=':material/ar_on_you:'):
-            st.session_state.current_teacher_tab = 'take_attendance'
+
+        type1 = (
+
+            "primary"
+
+            if
+
+            st.session_state[
+                'current_teacher_tab'
+            ]
+
+            ==
+
+            'take_attendance'
+
+            else
+
+            "tertiary"
+        )
+
+        if st.button(
+
+            'Take Attendance',
+
+            type=type1,
+
+            width='stretch',
+
+            icon=
+                ':material/ar_on_you:'
+        ):
+
+            st.session_state[
+                'current_teacher_tab'
+            ] = 'take_attendance'
+
             st.rerun()
 
+    # =====================================
+    # MANAGE SUBJECTS
+    # =====================================
     with tab2:
-        type2 = "primary" if st.session_state.current_teacher_tab == 'manage_subjects' else "tertiary"
-        if st.button('Manage Subjects', type=type2, width='stretch', icon=':material/book_ribbon:'):
-            st.session_state.current_teacher_tab = 'manage_subjects'
+
+        type2 = (
+
+            "primary"
+
+            if
+
+            st.session_state[
+                'current_teacher_tab'
+            ]
+
+            ==
+
+            'manage_subjects'
+
+            else
+
+            "tertiary"
+        )
+
+        if st.button(
+
+            'Manage Subjects',
+
+            type=type2,
+
+            width='stretch',
+
+            icon=
+                ':material/book_ribbon:'
+        ):
+
+            st.session_state[
+                'current_teacher_tab'
+            ] = 'manage_subjects'
+
             st.rerun()
 
+    # =====================================
+    # ATTENDANCE RECORDS
+    # =====================================
     with tab3:
-        type3 = "primary" if st.session_state.current_teacher_tab == 'attendence_records' else "tertiary"
-        if st.button('Attendance Records',type=type3, width='stretch', icon=':material/cards_stack:'):
-            st.session_state.current_teacher_tab = 'attendence_records'
+
+        type3 = (
+
+            "primary"
+
+            if
+
+            st.session_state[
+                'current_teacher_tab'
+            ]
+
+            ==
+
+            'attendence_records'
+
+            else
+
+            "tertiary"
+        )
+
+        if st.button(
+
+            'Attendance Records',
+
+            type=type3,
+
+            width='stretch',
+
+            icon=
+                ':material/cards_stack:'
+        ):
+
+            st.session_state[
+                'current_teacher_tab'
+            ] = 'attendence_records'
+
             st.rerun()
 
+    # =====================================
+    # LECTURE MANAGEMENT
+    # =====================================
+    with tab4:
+
+        type4 = (
+
+            "primary"
+
+            if
+
+            st.session_state[
+                'current_teacher_tab'
+            ]
+
+            ==
+
+            'lecture_management'
+
+            else
+
+            "tertiary"
+        )
+
+        if st.button(
+
+            'Lecture Management',
+
+            type=type4,
+
+            width='stretch',
+
+            icon=
+                ':material/event_note:'
+        ):
+
+            st.session_state[
+                'current_teacher_tab'
+            ] = 'lecture_management'
+
+            st.rerun()
 
     st.divider()
 
-    if st.session_state.current_teacher_tab == "take_attendance":
+    # =====================================
+    # TAB ROUTING
+    # =====================================
+    if (
+
+        st.session_state[
+            'current_teacher_tab'
+        ]
+
+        ==
+
+        "take_attendance"
+    ):
+
         teacher_tab_take_attendence()
-    if st.session_state.current_teacher_tab == "manage_subjects":
+
+    elif (
+
+        st.session_state[
+            'current_teacher_tab'
+        ]
+
+        ==
+
+        "manage_subjects"
+    ):
+
         teacher_tab_manage_subjects()
-    if st.session_state.current_teacher_tab == "attendence_records":
+
+    elif (
+
+        st.session_state[
+            'current_teacher_tab'
+        ]
+
+        ==
+
+        "attendence_records"
+    ):
+
         teacher_tab_attendence_records()
 
-    
+    elif (
 
+        st.session_state[
+            'current_teacher_tab'
+        ]
 
+        ==
+
+        "lecture_management"
+    ):
+
+        teacher_tab_lecture_management()
+
+    # =====================================
+    # FOOTER
+    # =====================================
     footer_dashboard()
+
 
 def teacher_tab_take_attendence():
 
@@ -317,74 +600,293 @@ def teacher_tab_take_attendence():
 
 
 
-
-
-
 def teacher_tab_manage_subjects():
 
-    teacher_id = st.session_state.teacher_data['teacher_id']
+    teacher_id = (
+        st.session_state
+        .teacher_data[
+            'teacher_id'
+        ]
+    )
 
+    # =====================================
+    # HEADER
+    # =====================================
     col1, col2 = st.columns(2)
 
     with col1:
-        st.header('Manage Subjects')
+
+        st.header(
+            'Manage Subjects'
+        )
 
     with col2:
 
         if st.button(
+
             'Create New Subject',
-            width='stretch',
+
+            width='stretch'
         ):
 
-            create_subject_dialog(teacher_id)
+            create_subject_dialog(
+                teacher_id
+            )
 
-    # =====================================================
+    # =====================================
     # GET SUBJECTS
-    # =====================================================
-    subjects = get_teacher_subject(teacher_id)
+    # =====================================
+    subjects = (
+        get_teacher_subject(
+            teacher_id
+        )
+    )
 
-    # =====================================================
+# =====================================
+# DASHBOARD
+    # =====================================
+    if subjects:
+
+        total_subjects = len(
+            subjects
+        )
+
+        total_students = sum(
+
+            s[
+                'total_students'
+            ]
+
+            for s in subjects
+        )
+
+        total_classes = sum(
+
+            s[
+                'total_classes'
+            ]
+
+            for s in subjects
+        )
+
+        st.subheader(
+            "Dashboard"
+        )
+
+        d1,d2,d3 = st.columns(
+            3,
+            gap='medium'
+        )
+
+        with d1:
+
+            st.metric(
+
+                label=
+                    "📚 Subjects",
+
+                value=
+                    total_subjects,
+
+                border=True
+            )
+
+        with d2:
+
+            st.metric(
+
+                label=
+                    "👨‍🎓 Students",
+
+                value=
+                    total_students,
+
+                border=True
+            )
+
+        with d3:
+
+            st.metric(
+
+                label=
+                    "🕒 Classes",
+
+                value=
+                    total_classes,
+
+                border=True
+            )
+
+        st.divider()
+
+    # =====================================
     # SHOW SUBJECTS
-    # =====================================================
+    # =====================================
     if subjects:
 
         for sub in subjects:
 
             stats = [
-                ("🫂", "Students", sub['total_students']),
-                ("🕰️", "Classes", sub['total_classes']),
+
+                (
+                    "🫂",
+                    "Students",
+                    sub[
+                        'total_students'
+                    ]
+                ),
+
+                (
+                    "🕰️",
+                    "Classes",
+                    sub[
+                        'total_classes'
+                    ]
+                )
             ]
 
-            # =============================================
-            # SHARE BUTTON CALLBACK
-            # =============================================
+            # =====================================
+            # FOOTER CALLBACK
+            # =====================================
             def share_btn(
-                subject_name=sub['name'],
-                subject_code=sub['subject_code']
+
+                subject_name=
+                    sub['name'],
+
+                subject_code=
+                    sub['subject_code'],
+
+                subject_id=
+                    sub['subject_id'],
+
+                current_sub=
+                    sub
             ):
 
-                if st.button(
-                    f"Share Code: {subject_name}",
-                    key=f"share_{subject_code}",
-                    icon=":material/share:"
-                ):
+                c1,c2,c3,c4 = st.columns(4)
 
-                    share_subject_dialog(
-                        subject_name,
-                        subject_code
-                    )
+                # -----------------------------
+                # SHARE
+                # -----------------------------
+                with c1:
+
+                    if st.button(
+
+                        "Share",
+
+                        key=
+                            f"share_{subject_code}",
+
+                        icon=
+                            ":material/share:",
+
+                        use_container_width=
+                            True
+                    ):
+
+                        share_subject_dialog(
+
+                            subject_name,
+
+                            subject_code
+                        )
+
+                # -----------------------------
+                # STUDENTS
+                # -----------------------------
+                with c2:
+
+                    if st.button(
+
+                        "Students",
+
+                        key=
+                            f"students_{subject_code}",
+
+                        icon=
+                            ":material/groups:",
+
+                        use_container_width=
+                            True
+                    ):
+
+                        view_students_dialog(
+                            subject_id
+                        )
+
+                # -----------------------------
+                # EDIT
+                # -----------------------------
+                with c3:
+
+                    if st.button(
+
+                        "Edit",
+
+                        key=
+                            f"edit_{subject_code}",
+
+                        icon=
+                            ":material/edit:",
+
+                        use_container_width=
+                            True
+                    ):
+
+                        edit_subject_dialog(
+                            current_sub
+                        )
+
+                # -----------------------------
+                # DELETE
+                # -----------------------------
+                with c4:
+
+                    if st.button(
+
+                        "Delete",
+
+                        key=
+                            f"delete_{subject_code}",
+
+                        icon=
+                            ":material/delete:",
+
+                        use_container_width=
+                            True
+                    ):
+
+                        delete_subject_dialog(
+                            subject_id
+                        )
 
                 st.space()
 
-            # =============================================
+            # =====================================
             # SUBJECT CARD
-            # =============================================
+            # =====================================
             subject_card(
-                name=sub['name'],
-                code=sub['subject_code'],
-                section=sub['section'],
-                stats=stats,
-                footer_callback=share_btn
+
+                name=
+                    sub[
+                        'name'
+                    ],
+
+                code=
+                    sub[
+                        'subject_code'
+                    ],
+
+                section=
+                    sub[
+                        'section'
+                    ],
+
+                stats=
+                    stats,
+
+                footer_callback=
+                    share_btn
             )
 
     else:
@@ -394,57 +896,1084 @@ def teacher_tab_manage_subjects():
         )
 
 
+
 def teacher_tab_attendence_records():
-    st.header('Attendance Records')
 
-    teacher_id = st.session_state.teacher_data['teacher_id']
+    st.header(
+        'Attendance Records'
+    )
 
-    records = get_attendance_for_teacher(teacher_id)
+    teacher_id = (
+        st.session_state
+        .teacher_data[
+            'teacher_id'
+        ]
+    )
+
+    records = (
+        get_attendence_for_teacher(
+            teacher_id
+        )
+    )
 
     if not records:
+
+        st.info(
+            "No attendance records found"
+        )
         return
-    
+
     data = []
 
+    # =====================================
+    # BUILD DATA
+    # =====================================
     for r in records:
-        ts = r.get('timestamp')
+
+        ts = r.get(
+            'timestamp'
+        )
+
+        if ts:
+
+            dt = (
+                datetime
+                .fromisoformat(
+                    ts.replace(
+                        "Z",
+                        "+00:00"
+                    )
+                )
+            )
+
+            formatted_time = (
+                dt.strftime(
+                    "%Y-%m-%d %I:%M:%S %p"
+                )
+            )
+
+            ts_group = (
+                dt.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+            )
+
+            date_only = (
+                dt.date()
+            )
+
+            month_year = (
+                dt.strftime(
+                    "%B %Y"
+                )
+            )
+
+        else:
+
+            formatted_time = (
+                "N/A"
+            )
+
+            ts_group = None
+            date_only = None
+            month_year = None
 
         data.append({
-            "ts_group": ts.split(".")[0] if ts else None,
-            "Time": datetime.fromisoformat(ts).strftime("%Y-%m-%d %I:%M %p") if ts else "N'A",
-            "Subject": r['subject']['name'],
-            "Subject Code":r['subject']['subject_code'],
-            "is_present": bool(r.get('is_present', False))
+
+            "ts_group":
+                ts_group,
+
+            "Date":
+                date_only,
+
+            "Month":
+                month_year,
+
+            "Time":
+                formatted_time,
+
+            "Subject":
+                r[
+                    'subject'
+                ][
+                    'name'
+                ],
+
+            "Subject Code":
+                r[
+                    'subject'
+                ][
+                    'subject_code'
+                ],
+
+            "Student Name":
+                r[
+                    'students'
+                ][
+                    'name'
+                ],
+
+            "Student ID":
+                r[
+                    'students'
+                ][
+                    'student_id'
+                ],
+
+            "is_present":
+                bool(
+                    r.get(
+                        'is_present',
+                        False
+                    )
+                )
         })
 
+    # =====================================
+    # DATAFRAME
+    # =====================================
+    df = pd.DataFrame(
+        data
+    )
 
-    df = pd.DataFrame(data)
+    if df.empty:
 
+        st.info(
+            "No data available"
+        )
+        return
 
+    # =====================================
+    # SUBJECT FILTER
+    # =====================================
+    subjects = sorted(
 
-    summary = (
-        df.groupby(['ts_group', 'Time', 'Subject', 'Subject Code'])
+        df[
+            'Subject'
+        ]
+        .dropna()
+        .unique()
+    )
+
+    selected_subject = st.selectbox(
+
+        "Select Subject",
+
+        subjects
+    )
+
+    filtered_df = (
+
+        df[
+            df[
+                'Subject'
+            ]
+
+            ==
+
+            selected_subject
+        ]
+    )
+
+    # =====================================
+    # DATE FILTER
+    # =====================================
+    st.subheader(
+        "Date Filter"
+    )
+
+    col1, col2 = (
+        st.columns(2)
+    )
+
+    with col1:
+
+        start_date = (
+            st.date_input(
+
+                "From",
+
+                filtered_df[
+                    'Date'
+                ].min()
+            )
+        )
+
+    with col2:
+
+        end_date = (
+            st.date_input(
+
+                "To",
+
+                filtered_df[
+                    'Date'
+                ].max()
+            )
+        )
+
+    filtered_df = (
+
+        filtered_df[
+
+            (
+                filtered_df[
+                    'Date'
+                ]
+
+                >=
+
+                start_date
+            )
+
+            &
+
+            (
+                filtered_df[
+                    'Date'
+                ]
+
+                <=
+
+                end_date
+            )
+        ]
+    )
+
+    # =====================================
+    # MONTH FILTER
+    # =====================================
+    months = sorted(
+
+        filtered_df[
+            'Month'
+        ]
+        .dropna()
+        .unique()
+    )
+
+    selected_month = st.selectbox(
+
+        "Monthly Filter",
+
+        ["All"]
+        +
+        list(months)
+    )
+
+    if (
+        selected_month
+        !=
+        "All"
+    ):
+
+        filtered_df = (
+
+            filtered_df[
+
+                filtered_df[
+                    'Month'
+                ]
+
+                ==
+
+                selected_month
+            ]
+        )
+
+    # =====================================
+    # SEARCH
+    # =====================================
+    search = st.text_input(
+        "Search Student Name / ID"
+    )
+
+    # =====================================
+    # STUDENT SUMMARY PREP
+    # =====================================
+    student_summary = (
+
+        filtered_df
+        .groupby(
+            [
+                'Student ID',
+                'Student Name'
+            ]
+        )
         .agg(
-            Present_Count = ('is_present', 'sum'),
-            Total_Count =('is_present', 'count')
-        ).reset_index()
 
+            Present_Count=(
+                'is_present',
+                'sum'
+            ),
+
+            Total_Classes=(
+                'is_present',
+                'count'
+            )
+        )
+        .reset_index()
     )
 
-    summary['Attendance Stats'] = (
-        "✅ " + summary['Present_Count'].astype(str) + " /"
-        + summary['Total_Count'].astype(str) + ' Students'
+    student_summary[
+        'Absent_Count'
+    ] = (
+
+        student_summary[
+            'Total_Classes'
+        ]
+
+        -
+
+        student_summary[
+            'Present_Count'
+        ]
     )
 
-    display_df = ( summary.sort_values(by='ts_group' ,ascending=False)
-                [['Time', 'Subject', 'Subject Code', 'Attendance Stats']]
+    student_summary[
+        'Attendance_Num'
+    ] = (
+
+        student_summary[
+            'Present_Count'
+        ]
+
+        /
+
+        student_summary[
+            'Total_Classes'
+        ]
+
+    ) * 100
+
+    student_summary[
+        'Attendance %'
+    ] = (
+
+        student_summary[
+            'Attendance_Num'
+        ]
+
+    ).round(2).astype(str) + "%"
+
+        # =====================================
+    # SEARCH FILTER
+    # =====================================
+    if search:
+
+        student_summary = (
+
+            student_summary[
+
+                student_summary[
+                    'Student Name'
+                ]
+                .str.contains(
+
+                    search,
+
+                    case=False,
+
+                    na=False
                 )
-    
-    st.dataframe(display_df, width='stretch', hide_index=True)
 
+                |
 
+                student_summary[
+                    'Student ID'
+                ]
+                .astype(str)
+                .str.contains(
 
+                    search,
 
+                    case=False,
+
+                    na=False
+                )
+            ]
+        )
+
+    # =====================================
+    # LOW ATTENDANCE
+    # =====================================
+    low_attendance = (
+
+        student_summary[
+
+            student_summary[
+                'Attendance_Num'
+            ]
+
+            <
+
+            75
+        ]
+    )
+
+    # =====================================
+    # DASHBOARD TOP
+    # =====================================
+    total_students = len(
+        student_summary
+    )
+
+    total_classes = 0
+
+    if not student_summary.empty:
+
+        total_classes = (
+
+            student_summary[
+                'Total_Classes'
+            ]
+            .max()
+        )
+
+    avg_attendance = 0
+
+    if not student_summary.empty:
+
+        avg_attendance = round(
+
+            student_summary[
+                'Attendance_Num'
+            ]
+            .mean(),
+
+            2
+        )
+
+    low_count = len(
+        low_attendance
+    )
+
+    st.subheader(
+        "Attendance Dashboard"
+    )
+
+    col1,col2,col3,col4 = st.columns(4)
+
+    with col1:
+
+        st.metric(
+            "Students",
+            total_students
+        )
+
+    with col2:
+
+        st.metric(
+            "Classes",
+            total_classes
+        )
+
+    with col3:
+
+        st.metric(
+            "Average %",
+            f"{avg_attendance}%"
+        )
+
+    with col4:
+
+        st.metric(
+            "Below 75%",
+            low_count
+        )
+
+    st.divider()
+
+    # =====================================
+    # LOW ATTENDANCE TABLE
+    # =====================================
+    if not low_attendance.empty:
+
+        st.warning(
+            "Students below 75% attendance"
+        )
+
+        st.dataframe(
+
+            low_attendance[
+                [
+                    'Student ID',
+                    'Student Name',
+                    'Attendance %'
+                ]
+            ],
+
+            width='stretch',
+
+            hide_index=True
+        )
+
+    # =====================================
+    # CLASS SUMMARY
+    # =====================================
+    summary = (
+
+        filtered_df
+        .groupby(
+            [
+                'ts_group',
+                'Time',
+                'Subject',
+                'Subject Code'
+            ]
+        )
+        .apply(
+
+            lambda g:
+
+            pd.Series({
+
+                'Present_Count':
+
+                    g[
+                        'is_present'
+                    ]
+                    .sum(),
+
+                'Total_Count':
+
+                    len(g)
+            })
+        )
+        .reset_index()
+    )
+
+    summary[
+        'Attendance Stats'
+    ] = (
+
+        "✅ "
+
+        +
+
+        summary[
+            'Present_Count'
+        ]
+        .astype(str)
+
+        +
+
+        " / "
+
+        +
+
+        summary[
+            'Total_Count'
+        ]
+        .astype(str)
+
+        +
+
+        " Students"
+    )
+
+    display_df = (
+
+        summary
+        .sort_values(
+
+            by=
+                'ts_group',
+
+            ascending=
+                False
+        )[
+            [
+                'Time',
+                'Subject',
+                'Subject Code',
+                'Attendance Stats'
+            ]
+        ]
+    )
+
+    st.subheader(
+
+        f"{selected_subject} "
+        "Class Attendance"
+    )
+
+    st.dataframe(
+
+        display_df,
+
+        width='stretch',
+
+        hide_index=True
+    )
+
+        # =====================================
+    # STUDENT REPORT
+    # =====================================
+    st.subheader(
+
+        f"{selected_subject} "
+        "Student Attendance Summary"
+    )
+
+    st.dataframe(
+
+        student_summary[
+            [
+                'Student ID',
+                'Student Name',
+                'Present_Count',
+                'Absent_Count',
+                'Total_Classes',
+                'Attendance %'
+            ]
+        ],
+
+        width='stretch',
+
+        hide_index=True
+    )
+
+    # # =====================================
+    # # BAR CHART
+    # # =====================================
+    # st.subheader(
+    #     "Attendance Chart"
+    # )
+
+    # if not student_summary.empty:
+
+    #     chart_df = (
+
+    #         student_summary
+    #         .set_index(
+    #             'Student Name'
+    #         )[
+    #             'Present_Count'
+    #         ]
+    #     )
+
+    #     st.bar_chart(
+    #         chart_df
+    #     )
+
+    # st.divider()
+
+    # =====================================
+    # DOWNLOAD REPORTS
+    # =====================================
+    st.subheader(
+        "Download Reports"
+    )
+
+    col1,col2,col3 = st.columns(3)
+
+    # =====================================
+    # CSV
+    # =====================================
+    csv = (
+
+        student_summary
+        .to_csv(
+            index=False
+        )
+    )
+
+    with col1:
+
+        st.download_button(
+
+            label=
+                "CSV",
+
+            data=
+                csv,
+
+            file_name=
+                f"{selected_subject}_attendance.csv",
+
+            mime=
+                "text/csv",
+
+            use_container_width=True
+        )
+
+    # =====================================
+    # EXCEL
+    # =====================================
+    excel_buffer = (
+        BytesIO()
+    )
+
+    with pd.ExcelWriter(
+
+        excel_buffer,
+
+        engine=
+            'openpyxl'
+
+    ) as writer:
+
+        student_summary.to_excel(
+
+            writer,
+
+            sheet_name=
+                'Attendance',
+
+            index=
+                False
+        )
+
+    excel_data = (
+        excel_buffer
+        .getvalue()
+    )
+
+    with col2:
+
+        st.download_button(
+
+            label=
+                "Excel",
+
+            data=
+                excel_data,
+
+            file_name=
+                f"{selected_subject}_attendance.xlsx",
+
+            mime=
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+
+            use_container_width=True
+        )
+
+    # =====================================
+    # PDF
+    # =====================================
+    pdf_buffer = (
+        BytesIO()
+    )
+
+    doc = (
+        SimpleDocTemplate(
+            pdf_buffer
+        )
+    )
+
+    styles = (
+        getSampleStyleSheet()
+    )
+
+    elements = []
+
+    elements.append(
+
+        Paragraph(
+
+            f"{selected_subject} Attendance Report",
+
+            styles[
+                'Title'
+            ]
+        )
+    )
+
+    elements.append(
+        Spacer(1,12)
+    )
+
+    table_data = [[
+
+        'Student ID',
+        'Student Name',
+        'Present',
+        'Absent',
+        'Total',
+        '%'
+    ]]
+
+    for _, row in (
+        student_summary
+        .iterrows()
+    ):
+
+        table_data.append([
+
+            str(
+                row[
+                    'Student ID'
+                ]
+            ),
+
+            str(
+                row[
+                    'Student Name'
+                ]
+            ),
+
+            str(
+                row[
+                    'Present_Count'
+                ]
+            ),
+
+            str(
+                row[
+                    'Absent_Count'
+                ]
+            ),
+
+            str(
+                row[
+                    'Total_Classes'
+                ]
+            ),
+
+            str(
+                row[
+                    'Attendance %'
+                ]
+            )
+        ])
+
+    table = Table(
+        table_data
+    )
+
+    elements.append(
+        table
+    )
+
+    doc.build(
+        elements
+    )
+
+    pdf_data = (
+        pdf_buffer
+        .getvalue()
+    )
+
+    with col3:
+
+        st.download_button(
+
+            label=
+                "PDF",
+
+            data=
+                pdf_data,
+
+            file_name=
+                f"{selected_subject}_attendance.pdf",
+
+            mime=
+                "application/pdf",
+
+            use_container_width=True
+        )
+
+#Session managemenr
+
+def teacher_tab_lecture_management():
+
+    st.header(
+        "Lecture Management"
+    )
+
+    teacher_id = (
+
+        st.session_state
+        .teacher_data[
+            'teacher_id'
+        ]
+    )
+
+    sessions = (
+
+        get_teacher_sessions(
+            teacher_id
+        )
+    )
+
+    if not sessions:
+
+        st.info(
+            "No lectures found"
+        )
+        return
+
+    # =====================================
+    # LECTURE CARDS
+    # =====================================
+    for s in sessions:
+
+        # =====================================
+        # UTC -> IST (+5:30)
+        # =====================================
+        dt = datetime.fromisoformat(
+
+            s[
+                'lecture_time'
+            ].replace(
+                "Z",
+                "+00:00"
+            )
+        )
+
+        # Add 5 hour 30 min
+        dt = dt + timedelta(
+
+            hours=5,
+
+            minutes=30
+        )
+
+        lecture_time = dt.strftime(
+
+            "%Y-%m-%d %I:%M:%S %p"
+        )
+
+        lecture_time = dt.strftime(
+
+            "%d %b %Y %I:%M %p"
+        )
+
+        present = (
+
+            s[
+                'present_students'
+            ]
+        )
+
+        total = (
+
+            s[
+                'total_students'
+            ]
+        )
+
+        # =====================================
+        # CARD
+        # =====================================
+        with st.container(
+            border=True
+        ):
+
+            c1, c2 = st.columns(
+                [3, 2],
+                vertical_alignment='center'
+            )
+
+            # =====================================
+            # LEFT SIDE
+            # =====================================
+            with c1:
+
+                st.subheader(
+
+                    s[
+                        'subject'
+                    ][
+                        'name'
+                    ]
+                )
+
+                st.caption(
+                    lecture_time
+                )
+
+                st.write(
+
+                    f"✅ "
+                    f"{present}"
+                    f" / "
+                    f"{total}"
+                    f" Students"
+                )
+
+            # =====================================
+            # RIGHT SIDE BUTTONS
+            # =====================================
+            with c2:
+
+                v, e, d = st.columns(
+                    3
+                )
+
+                # =====================================
+                # VIEW
+                # =====================================
+                with v:
+
+                   if st.button(
+
+                    "View",
+
+                    key=f"view_{
+                        s['session_id']
+                    }"
+                ):
+
+                    view_lecture_dialog(
+                        s
+                    )
+
+                # =====================================
+                # EDIT
+                # =====================================
+                with e:
+
+                    if st.button(
+
+                        "Edit",
+
+                        key=
+                            f"edit_{
+                                s['session_id']
+                            }",
+
+                        use_container_width=
+                            True
+                    ):
+
+                        edit_lecture_dialog(
+
+                            s[
+                                'session_id'
+                            ]
+                        )
+
+                # =====================================
+                # DELETE
+                # =====================================
+                with d:
+
+                    if st.button(
+
+                        "Del❌",
+
+                        key=
+                            f"delete_{
+                                s['session_id']
+                            }",
+
+                        use_container_width=
+                            True,
+
+                        type=
+                            'secondary'
+                    ):
+
+                        delete_lecture_dialog(
+
+                            s[
+                                'session_id'
+                            ]
+                        )
+
+        st.space()
 
 def login_teacher(username, password):
     if not username or not password:

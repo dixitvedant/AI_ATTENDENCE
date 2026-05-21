@@ -8,12 +8,14 @@ from src.components.footer import footer_dashboard
 from src.components.dialog_enroll import enroll_dialog
 from src.database.db import get_all_students,create_student,get_student_subjects,get_student_attendence,unenroll_student_to_subject
 from src.components.subject_card import subject_card
-
+from src.screens.ai_screen import ai_chat_widget
+from streamlit_calendar import calendar
 #Import PIL Image for image processing
 from PIL import Image
 
 #Import NumPy
 import numpy as np
+import pandas as pd
 
 #Import face recognition functions
 from src.pipelines.face_pipeline import (
@@ -42,7 +44,7 @@ def student_dashboard():
     student_id = student_data['student_id']
 
     # =====================================================
-    # TOP HEADER SECTION
+    # TOP HEADER
     # =====================================================
     c1, c2 = st.columns(
         2,
@@ -50,23 +52,15 @@ def student_dashboard():
         gap='xxlarge'
     )
 
-    # -----------------------------------------------------
-    # Left column
-    # -----------------------------------------------------
     with c1:
         header_dashboard()
 
-    # -----------------------------------------------------
-    # Right column
-    # -----------------------------------------------------
     with c2:
 
-        # Welcome message
         st.subheader(
             f"Welcome, {student_data['name']}"
         )
 
-        # Logout button
         if st.button(
             "Logout",
             type='secondary',
@@ -74,30 +68,27 @@ def student_dashboard():
             shortcut="control+backspace"
         ):
 
-            # Reset login state
-            st.session_state['is_logged_in'] = False
+            st.session_state[
+                'is_logged_in'
+            ] = False
 
-            # Remove session data
             del st.session_state.student_data
 
-            # Refresh app
             st.rerun()
 
-    # =====================================================
-    # SPACING
-    # =====================================================
     st.space()
 
     # =====================================================
-    # SUBJECT HEADER + ENROLL BUTTON
+    # SUBJECT HEADER
     # =====================================================
     c1, c2 = st.columns(2)
 
-    # Left column
     with c1:
-        st.header('Your Enrolled Subjects')
 
-    # Right column
+        st.header(
+            'Your Enrolled Subjects'
+        )
+
     with c2:
 
         if st.button(
@@ -108,22 +99,119 @@ def student_dashboard():
 
             enroll_dialog()
 
-    # Divider
     st.divider()
 
     # =====================================================
-    # LOAD SUBJECTS + ATTENDANCE
+    # LOAD DATA
     # =====================================================
     with st.spinner(
         'Loading your enrolled subjects..'
     ):
 
-        subjects = get_student_subjects(student_id)
+        subjects = get_student_subjects(
+            student_id
+        )
 
-        logs = get_student_attendence(student_id)
+        logs = get_student_attendence(
+            student_id
+        )
 
     # =====================================================
-    # CREATE ATTENDANCE STATS MAP
+    # DASHBOARD METRICS
+    # =====================================================
+    total_subjects = len(subjects)
+    total_classes = len(logs)
+
+    attended_classes = sum(
+
+        1
+
+        for log in logs
+
+        if log.get(
+            'is_present'
+        )
+    )
+
+    attendance_percent = 0
+
+    if total_classes > 0:
+
+        attendance_percent = round(
+
+            (
+                attended_classes
+                /
+                total_classes
+            ) * 100,
+
+            2
+        )
+
+    # =====================================================
+    # DASHBOARD
+    # =====================================================
+    st.subheader(
+        "Attendance Dashboard"
+    )
+
+    d1,d2,d3,d4 = st.columns(
+        4,
+        gap='medium'
+    )
+
+    with d1:
+
+        st.metric(
+            "📚 Subjects",
+            total_subjects,
+            border=True
+        )
+
+    with d2:
+
+        st.metric(
+            "📅 Classes",
+            total_classes,
+            border=True
+        )
+
+    with d3:
+
+        st.metric(
+            "✅ Attended",
+            attended_classes,
+            border=True
+        )
+
+    with d4:
+
+        st.metric(
+            "📊 Attendance %",
+            f"{attendance_percent}%",
+            border=True
+        )
+
+    if (
+
+        total_classes > 0
+
+        and
+
+        attendance_percent < 75
+    ):
+
+        st.warning(
+
+            f"Your attendance is below 75% "
+
+            f"({attendance_percent}%)"
+        )
+
+    st.divider()
+
+    # =====================================================
+    # ATTENDANCE STATS MAP
     # =====================================================
     stats_map = {}
 
@@ -131,96 +219,245 @@ def student_dashboard():
 
         sid = log['subject_id']
 
-        # Create subject entry
         if sid not in stats_map:
 
             stats_map[sid] = {
+
                 "total": 0,
                 "attended": 0
             }
 
-        # Total classes
-        stats_map[sid]['total'] += 1
+        stats_map[
+            sid
+        ][
+            'total'
+        ] += 1
 
-        # Present count
-        if log.get('is_present'):
+        if log.get(
+            'is_present'
+        ):
 
-            stats_map[sid]['attended'] += 1
+            stats_map[
+                sid
+            ][
+                'attended'
+            ] += 1
 
     # =====================================================
-    # DISPLAY SUBJECT CARDS
+    # SUBJECT CARDS
     # =====================================================
     cols = st.columns(2)
 
     for i, sub_node in enumerate(subjects):
 
-        # Subject data
         sub = sub_node['subject']
 
         sid = sub['subject_id']
 
-        # Get attendance stats
         stats = stats_map.get(
+
             sid,
+
             {
                 "total": 0,
                 "attended": 0
             }
         )
 
-        # =================================================
-        # UNENROLL BUTTON FUNCTION
-        # =================================================
+        # =============================================
+        # SUBJECT %
+        # =============================================
+        subject_percent = 0
+
+        if stats['total'] > 0:
+
+            subject_percent = round(
+
+                (
+                    stats['attended']
+                    /
+                    stats['total']
+                ) * 100,
+
+                2
+            )
+
+        # =============================================
+        # UNENROLL BUTTON
+        # =============================================
         def unenroll_button(
+
             sid=sid,
+
             sub_name=sub['name']
         ):
 
             if st.button(
+
                 "Unenroll from this course",
+
                 type='tertiary',
+
                 width='stretch',
+
                 icon=':material/delete_forever:',
+
                 key=f"unenroll_{sid}"
             ):
 
-                # Remove student from subject
                 unenroll_student_to_subject(
+
                     student_id,
+
                     sid
                 )
 
-                # Success message
                 st.toast(
-                    f"Unenrolled from {sub_name} successfully!"
+
+                    f"Unenrolled from "
+
+                    f"{sub_name} successfully!"
                 )
 
-                # Refresh page
                 st.rerun()
 
-        # =================================================
-        # SUBJECT CARD UI
-        # =================================================
         with cols[i % 2]:
 
             subject_card(
+
                 name=sub['name'],
+
                 code=sub['subject_code'],
+
                 section=sub['section'],
+
                 stats=[
+
                     (
                         '📅',
                         'Total',
                         stats['total']
                     ),
+
                     (
                         '✅',
                         'Attended',
                         stats['attended']
                     ),
+
+                    (
+                        '📊',
+                        '%',
+                        f"{subject_percent}%"
+                    ),
                 ],
-                footer_callback=unenroll_button
+
+                footer_callback=
+                    unenroll_button
             )
+
+    # =====================================================
+    # ATTENDANCE CALENDAR
+    # =====================================================
+    st.subheader(
+        "Attendance Calendar"
+    )
+
+    events = []
+
+    for log in logs:
+
+        date = log[
+            'timestamp'
+        ][
+            :10
+        ]
+
+        subject = log[
+            'subject'
+        ][
+            'name'
+        ]
+
+        present = log.get(
+            'is_present',
+            False
+        )
+
+        color = (
+
+            "#22c55e"
+
+            if present
+
+            else
+
+            "#ef4444"
+        )
+
+        title = (
+
+            f"{subject} "
+
+            +
+
+            (
+                "✓"
+
+                if present
+
+                else
+
+                "✗"
+            )
+        )
+
+        events.append({
+
+            "title":
+                title,
+
+            "start":
+                date,
+
+            "color":
+                color
+        })
+
+    calendar_options = {
+
+        "initialView":
+            "dayGridMonth",
+
+        "height":
+            650,
+
+        "headerToolbar": {
+
+            "left":
+                "prev,next today",
+
+            "center":
+                "title",
+
+            "right":
+                "dayGridMonth,timeGridWeek"
+        }
+    }
+
+    calendar(
+
+        events=
+            events,
+
+        options=
+            calendar_options,
+
+        key=
+            f"calendar_student_{student_id}"
+    )
+
+    ai_chat_widget()
 
     # =====================================================
     # FOOTER
@@ -504,6 +741,6 @@ def student_screen():
 
                         #Warning message
                         st.warning("Enter your name")
-
+    ai_chat_widget()
     #Display footer
     footer_dashboard()
